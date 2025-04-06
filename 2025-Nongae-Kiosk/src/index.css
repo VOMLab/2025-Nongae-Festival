@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: 'NanumMyeongjo-Bold';
+  src: url('/fonts/NanumMyeongjo-Bold.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'NanumMyeongjo-Regular';
+  src: url('/fonts/NanumMyeongjo-Regular.ttf') format('truetype');
+}
+
+@font-face {
+  font-family: 'NanumMyeongjo-ExtraBold';
+  src: url('/fonts/NanumMyeongjo-ExtraBold.ttf') format('truetype');
+}
+
