@@ -1,5 +1,6 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import socketService from '../services/socketService';
 
 const Photo = () => {
     const location = useLocation();
@@ -10,6 +11,16 @@ const Photo = () => {
     const [isStarted, setIsStarted] = useState(false);
     const videoRef = useRef(null);
     const streamRef = useRef(null);
+
+    // 사진 촬영 여부 한 번 체크
+    const [isPhotoTaken, setIsPhotoTaken] = useState(false);
+
+    useEffect(() => {
+      if(isPhotoTaken) {
+        navigate('/generation');
+      }
+    }, [isPhotoTaken, navigate]);
+
 
   const startCamera = async () => {
     try {
@@ -64,13 +75,25 @@ const Photo = () => {
       
       // 여기에 사진 저장 로직 추가
       const photoData = canvas.toDataURL('image/jpeg');
-      console.log('사진 촬영 완료:', photoData);
-      
-      // 카메라 스트림 정지
-      streamRef.current.getTracks().forEach(track => track.stop());
+      console.log('사진 촬영 완료:', photoData.substring(0,50));
 
-      // 이미지 생성 페이지로 전환
-      navigate('/generation');
+      const socket = socketService.getSocket();
+      if(!socket || !socket.connected) {
+        console.error('서버와 연결이 안되었습니다.');
+        return;
+      }
+     
+      try {
+        socket.emit('photo', photoData);
+        console.log('사진 전송 완료');
+
+      // 카메라 스트림 정지
+        streamRef.current.getTracks().forEach(track => track.stop());
+
+        setIsPhotoTaken(true);
+      } catch (error) {
+        console.error('사진 전송 오류:', error);
+      }
     }
   };
 

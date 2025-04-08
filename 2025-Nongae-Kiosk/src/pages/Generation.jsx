@@ -1,21 +1,78 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import socketService from '../services/socketService';
 
 const Generation = () => {
-    const [tempLoading, setTempLoading] = useState(100);
+    const [loading, setLoading] = useState(0);
     const navigate = useNavigate();
+    const resultImagesRef = useRef(null);
+    const targetProgressRef = useRef(100);
+    const animationRef = useRef(null);
+
+    const animationProgress = () => {
+        setLoading(prev => {
+            if (prev < targetProgressRef.current) {
+                const increment = Math.max(0.2, (targetProgressRef.current - prev) * 0.02);
+                return Math.min(prev + increment, targetProgressRef.current);
+            }
+            return prev;
+        });
+
+        animationRef.current = requestAnimationFrame(animationProgress);
+    };
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            setTempLoading(prev => {
-                if (prev <= 0) {
-                    clearInterval(interval);
-                    navigate('/result');
-                    return 0;
-                }
-                return prev - 1;
-            })
-        }, 50);
+        const socket = socketService.getSocket();
+
+        
+        // 진행률 이벤트 리스너
+        const progressHandler = (progress) => {
+            console.log('서버 진행률:', progress);
+
+            targetProgressRef.current = progress;
+
+            if(!animationRef.current) {
+                animationRef.current = requestAnimationFrame(animationProgress);
+            }
+        };
+
+        // 결과 이미지 이벤트 리스너
+        const resultHandler = (data) => {
+            // clearTimeout(fallbackTimer);
+            resultImagesRef.current = data.resultImage;
+            setLoading(100);
+
+            setTimeout(() => {
+                navigate('/result', {
+                    state: {
+                        images: [data.resultImage],
+                    },
+                });
+            }, 1000);
+        };
+
+        // 에러처리
+        const errorHandler = (error) => {
+            console.error('Error from server:', error.message);
+            // clearTimeout(fallbackTimer);
+            navigate('/result');
+        };
+
+        // 이벤트 리스너 등록
+        socket.on('progress', progressHandler);
+        socket.on('result-for-kiosk', resultHandler);
+        socket.on('error', errorHandler);
+
+        return () => {
+            // clearTimeout(fallbackTimer);
+            socket.off('progress', progressHandler);
+            socket.off('result-for-kiosk', resultHandler);
+            socket.off('error', errorHandler);
+
+            if(animationRef.current) {
+                cancelAnimationFrame(animationRef.current);
+            }
+        };
     }, [navigate]);
 
     return (
@@ -38,12 +95,10 @@ const Generation = () => {
                     </div> 
                     {/* 퍼센트 표시 */}
                     <div className="absolute top-1/2 left-1/2 font-bold -translate-x-1/2 -translate-y-1/2 text-2xl font-myeongjo">
-                        {tempLoading}%
+                        {Math.round(loading)}%
                     </div>
                 </div>
             </div>
-
-
         </main>
     )
 }

@@ -1,0 +1,21 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<package xmlns="http://schemas.microsoft.com/packaging/2013/05/nuspec.xsd">
+  <metadata>
+    <id>SocketIOClient.Newtonsoft.Json</id>
+    <version>3.0.7</version>
+    <authors>SocketIOClient.Newtonsoft.Json</authors>
+    <license type="expression">MIT</license>
+    <licenseUrl>https://licenses.nuget.org/MIT</licenseUrl>
+    <projectUrl>https://github.com/doghappy/socket.io-client-csharp</projectUrl>
+    <description>socket.io-client json serialization/deserialization for Newtonsoft.Json</description>
+    <tags>socket.io-client</tags>
+    <repository type="github" url="https://github.com/doghappy/socket.io-client-csharp" />
+    <dependencies>
+      <group targetFramework=".NETStandard2.0">
+        <dependency id="SocketIOClient" version="3.0.8" exclude="Build,Analyzers" />
+        <dependency id="Newtonsoft.Json" version="13.0.2" exclude="Build,Analyzers" />
+        <dependency id="System.Text.Json" version="7.0.2" exclude="Build,Analyzers" />
+      </group>
+    </dependencies>
+  </metadata>
+</package>

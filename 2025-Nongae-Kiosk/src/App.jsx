@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import Home from './pages/Home';
 import About from './pages/About';
@@ -6,8 +6,16 @@ import Photo from './pages/Photo';
 import Generation from './pages/Generation';
 import Result from './pages/Result';
 import PrintResult from './pages/PrintResult';
+import socketService from './services/socketService';
 
 function App() {
+  useEffect(() => {
+    socketService.connect();
+
+    return () => {
+      socketService.disconnect();
+    };
+  }, []);
   return (
     <div className="app">
       <Routes>

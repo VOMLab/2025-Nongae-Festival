@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 // 한글 조합을 위한 유틸리티 함수들
 const CHOSUNG = ['ㄱ', 'ㄲ', 'ㄴ', 'ㄷ', 'ㄸ', 'ㄹ', 'ㅁ', 'ㅂ', 'ㅃ', 'ㅅ', 'ㅆ', 'ㅇ', 'ㅈ', 'ㅉ', 'ㅊ', 'ㅋ', 'ㅌ', 'ㅍ', 'ㅎ'];
@@ -8,6 +8,7 @@ const JONGSUNG = ['', 'ㄱ', 'ㄲ', 'ㄳ', 'ㄴ', 'ㄵ', 'ㄶ', 'ㄷ', 'ㄹ', '�
 
 const Result = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [isShift, setIsShift] = useState(false);
     const [inputText, setInputText] = useState('');
     const [composition, setComposition] = useState({
@@ -15,6 +16,16 @@ const Result = () => {
         jungsung: '',
         jongsung: ''
     });
+    const [generatedImage, setGeneratedImage] = useState('');
+
+
+    useEffect(() => {
+        if(location.state && location.state.images && location.state.images.length > 0) {
+            setGeneratedImage(location.state.images[0]);
+        } else {
+            console.log('No images found');
+        }
+    }, [location.state]);
 
     // 단자음/쌍자음 배열 정의
     const firstRow = {
@@ -125,8 +136,16 @@ const Result = () => {
             </div>
 
             {/* 완성된 이미지 영역 */}
-            <div className="flex bg-[#EAE4DF] justify-center items-center h-[35%] w-[250px] rounded-lg mb-24">
-                <p>이미지 들어올 부분</p>
+            <div className="flex bg-[#EAE4DF] justify-center items-center h-[35%] w-[250px] rounded-lg mb-24 overflow-hidden">
+                {generatedImage ? (
+                    <img 
+                        src={generatedImage} 
+                        alt="Generated AI portrait" 
+                        className="h-full object-contain"
+                    />
+                ) : (
+                    <p>이미지를 불러오는 중...</p>
+                )}
             </div>
 
             {/* 텍스트 입력 표시 영역 */}
