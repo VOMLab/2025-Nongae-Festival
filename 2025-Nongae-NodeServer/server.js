@@ -16,7 +16,8 @@ const { v4: uuidv4 } = require('uuid'); // 파일 이름 생성
 const app = express();
 const server = createServer(app);
 const io = new Server(server, {
-    cors: '*'
+    cors: '*',
+    methods: ['GET', 'POST']
 });
 
 // COMFYUI 서버 설정
@@ -28,40 +29,90 @@ const COMFYUI_OUTPUT_DIR = 'C:/Users/yty07/OneDrive/바탕 화면/comfyOutput';
 // 서버의 진행상황을 위한 웹소켓
 const comfySocket = require('ws');
 
+// Socket ID
+const clients = {
+    kiosk: [],
+    unity: []
+}
+
 // connection 이벤트 핸들러
 io.on('connection', (socket) => {
 
     socket.on('register', (data) => {
-        console.log(data);
+        console.log(data + ' 연결 완료');
+        socket.clientId = data;
+        socket.clientType = 'kiosk';
+
+        clients.kiosk.push({
+            id: socket.id,
+            name: data
+        })
+    })
+
+    socket.on('register-for-unity', (data) => {
+        console.log(data + ' 연결 완료');
+        socket.clientId = data;
+        socket.clientType = 'unity';
+
+        clients.unity.push({
+            id: socket.id,
+            name: data
+        })
     })
 
     // 이미지 데이터 처리
     socket.on('photo', async (photoData) => {
         console.log('**** 이미지 수신 완료 ****');
 
-        // 이미지를 ComfyUI Input 폴더에 저장
+        try {
+            // 이미지를 ComfyUI Input 폴더에 저장
 
-        // Base64 형식의 이미지 데이터에서 메타데이터 부분(data:image/jpeg;base64, 등)을 제거하고
-        // 실제 이미지 데이터만 추출하는 과정
-        const base64Data = photoData.replace(/^data:image\/\w+;base64,/, '');
-        const imageBuffer = Buffer.from(base64Data, 'base64');
-        const filename = `${uuidv4()}.png`;
-        const filepath = path.join(COMFYUI_INPUT_DIR, filename);
+            // Base64 형식의 이미지 데이터에서 메타데이터 부분(data:image/jpeg;base64, 등)을 제거하고
+            // 실제 이미지 데이터만 추출하는 과정
+            const base64Data = photoData.replace(/^data:image\/\w+;base64,/, '');
+            const imageBuffer = Buffer.from(base64Data, 'base64');
+            const filename = `${uuidv4()}.png`;
+            const filepath = path.join(COMFYUI_INPUT_DIR, filename);
 
-        fs.writeFileSync(filepath, imageBuffer);
-        console.log(`이미지 저장 완료, 경로: ${filepath}`);
+            fs.writeFileSync(filepath, imageBuffer);
+            console.log(`이미지 저장 완료, 경로: ${filepath}`);
 
-        // 워크플로우 실행
-        const result = await runComfyWorkflow(filename, socket);
+            // 워크플로우 실행
+            const result = await runComfyWorkflow(filename, socket);
 
-        // 실행한 결과 원본을 클라이언트에 전달
-        socket.emit('result-for-kiosk', {
-            success: true,
-            resultImage: result.resultImageBase64,
-        })
+            // 실행한 결과 원본을 클라이언트에 전달
+            // socket.emit('result-for-kiosk', {
+            //     success: true,
+            //     resultImage: result.resultImageBase64,
+            // })
+            io.to(clients.kiosk[0].id).emit('result-for-kiosk', {
+                success: true,
+                resultImage: result.resultImageBase64,
+            })
 
-    // 배경이 제거된 결과를 유니티에 전달
-    //socket.emit('result', result);
+            //배경이 제거된 결과를 유니티에 전달
+            io.to(clients.unity[0].id).emit('result-for-unity', {
+                success: true,
+                resultImage: result.backgroundRemovedImageBase64,
+            })
+        } catch(e) {
+            console.error("이미지 처리 오류", e);
+        }
+    })
+
+    socket.on('disconnect', () => {
+        if(socket.clientId) {
+            console.log(socket.clientId + ' 연결 해제');
+            // 클라이언트 타입에 따라 해당 배열에서 제거
+            if (socket.clientType === 'kiosk') {
+                // filter 메소드는 조건을 만족하는 요소만 포함하는 새 배열을 반환합니다.
+                // 여기서는 현재 연결 해제된 소켓의 ID와 다른 ID를 가진 클라이언트만 남깁니다.
+                // 즉, 연결 해제된 클라이언트를 배열에서 제거하는 역할을 합니다.
+                clients.kiosk = clients.kiosk.filter(client => client.id !== socket.id);
+            } else if (socket.clientType === 'unity') {
+                clients.unity = clients.unity.filter(client => client.id !== socket.id);
+            }
+        }
     })
 });
 
