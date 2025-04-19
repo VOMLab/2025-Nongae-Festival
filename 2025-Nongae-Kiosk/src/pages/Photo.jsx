@@ -54,19 +54,42 @@ const Photo = () => {
     }, 1000);
   };
 
-  const renderTextFromRole = (role) => {
+  const renderPoseImageFromRole = (role) => {
     switch (role) {
       case '춤꾼':
-        return '춤추는 포즈를 취해보세요';
+        return '/UI/UI_04_floating_Pose_01.png';
       case '소리꾼':
-        return '악기를 연주하는 포즈를 취해보세요';
+        return '/UI/UI_04_floating_Pose_02.png';
       case '관람꾼':
-        return '구경하는 포즈를 취해보세요'
+        return '/UI/UI_04_floating_Pose_03.png';
+    }
+  }
+
+  const renderBackgroundImageFromRole = (role) => {
+    switch (role) {
+      case '춤꾼':
+        return '/UI/UI_04-1.png';
+      case '소리꾼':
+        return '/UI/UI_04-2.png';
+      case '관람꾼':
+        return '/UI/UI_04-3.png';
+    }
+  }
+
+  const convertRoleToNumber = (role) => {
+    // 춤꾼, 소리꾼, 관람꾼 순서대로 0, 1, 2로 변환
+    switch (role) {
+      case '춤꾼':
+        return 0;
+      case '소리꾼':
+        return 1;
+      case '관람꾼':
+        return 2;
     }
   }
 
 
-  const takePhoto = () => {
+  const takePhoto = async () => {
     if (videoRef.current && streamRef.current) {
       const canvas = document.createElement('canvas');
       canvas.width = videoRef.current.videoWidth;
@@ -77,14 +100,16 @@ const Photo = () => {
       const photoData = canvas.toDataURL('image/jpeg');
       console.log('사진 촬영 완료:', photoData.substring(0,50));
 
-      const socket = socketService.getSocket();
+      const socket = await socketService.getSocket();
       if(!socket || !socket.connected) {
         console.error('서버와 연결이 안되었습니다.');
         return;
       }
+
+      const roleNumber = convertRoleToNumber(selectedRole);
      
       try {
-        socket.emit('photo', photoData);
+        socket.emit('photo', photoData, roleNumber, socketService.config.kioskId);
         console.log('사진 전송 완료');
 
       // 카메라 스트림 정지
@@ -98,51 +123,55 @@ const Photo = () => {
   };
 
   return (
-    <div className="relative flex flex-col min-h-screen bg-main-bg">
-      {/* HOME 버튼 */}
-      <div className="absolute top-4 right-4 z-50">
-        <Link 
-          to="/" 
-          className="px-4 py-2 bg-[#C4B5A5] text-white rounded-full font-myeongjo text-sm"
-        >
-          🏠HOME
-        </Link>
-      </div>
-
+    <div className="relative flex flex-col min-h-screen">
+      {/* 배경 */}
+      {!isStarted ? (
+        <img src={'/UI/UI_03.png'} alt="UI_03" className='w-full h-full object-cover absolute top-0 left-0 -z-10' />
+      ) : (
+        <img src={renderBackgroundImageFromRole(selectedRole)} alt="UI_04_floating_Pose" className='w-full h-full object-cover absolute top-0 left-0 -z-10' />
+      )}
       {/* 메인 컨텐츠 */}
-      <div className="flex-1 flex flex-col items-center justify-center p-4">
+      <div className="flex-1 flex flex-col items-center w-full h-full p-10">
         {/* 카메라 뷰어 */}
-        <div className="relative w-full max-w-md aspect-[3/4] bg-gray-200 rounded-lg overflow-hidden mb-6">
+        <div className="w-full h-full aspect-[1/1.63] overflow-hidden">
           <video
             ref={videoRef}
             autoPlay
             playsInline
             className="w-full h-full object-cover scale-x-[-1]"
           />
+          <img src={'/UI/UI_04_floating_Frame.png'} alt="UI_04_floating_Frame" className='w-full h-full object-cover' />
         </div>
-        {/* 역할 텍스트 */}
-        {isStarted &&
-        <div>
-            <p className="text-black font-myeongjo text-lg mb-2">
-                {renderTextFromRole(selectedRole)}
-            </p>
-            <p className='text-black font-myeongjo text-2xl text-center'>{countdown}</p>
-        </div>
-        }
+        {/* 역할 포즈 이미지 */}
+        {isStarted && (
+          <div className='absolute inset-0 w-full h-full flex flex-col justify-end pb-40 items-center'>
+            <img src={renderPoseImageFromRole(selectedRole)} alt="UI_04_floating_Pose" className='w-1/4 h-1/4 object-contain' />
+          </div>
+        )}
+
       </div>
         {/* 시작 전 오버레이 */}
           {!isStarted && (
-            <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center bg-black-opacity-50">
-              <p className="text-black font-myeongjo text-lg mb-8">
-                버튼을 누르면 5초 후에 사진이 촬영됩니다
-              </p>
+            <div className="absolute inset-0 w-full h-full flex flex-col justify-center items-center pb-36">
               <button
                 onClick={startCamera}
-                className="px-8 py-2 bg-[#8B7355] text-white rounded-full font-myeongjo text-lg hover:bg-[#6D5D45] transition-colors"
               >
-                시작
+                <img src={'/UI/UI_03_button_Start.png'} alt="UI_03_button_Start" className='w-46 h-12' />
               </button>
             </div>
+          )}
+
+        {/* 카운트 텍스트 */}
+        {isStarted &&
+        <div className='absolute inset-0 w-full h-full flex flex-col justify-end items-center pb-11 cursor-default'>
+            <p className='text-black font-myeongjo text-2xl text-center'>{countdown}</p>
+        </div>
+        }
+          {/* 홈 버튼 */}
+          {!isStarted && (
+            <Link to="/" className='absolute bottom-28 left-12'>
+              <img src={'/UI/UI_03_button_Home.png'} alt="UI_03_button_Home" className='w-1/4 h-1/4' />
+            </Link>
           )}
     </div>
   );

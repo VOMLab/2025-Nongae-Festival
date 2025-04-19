@@ -7,10 +7,15 @@ import Generation from './pages/Generation';
 import Result from './pages/Result';
 import PrintResult from './pages/PrintResult';
 import socketService from './services/socketService';
+import ImagePreloader from './components/ImagePreloader';
 
 function App() {
   useEffect(() => {
-    socketService.connect();
+    const connectSocket = async () => {
+      await socketService.connect();
+    }
+
+    connectSocket();
 
     return () => {
       socketService.disconnect();
@@ -18,6 +23,7 @@ function App() {
   }, []);
   return (
     <div className="app">
+      <ImagePreloader />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />

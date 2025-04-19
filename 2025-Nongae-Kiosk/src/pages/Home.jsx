@@ -11,7 +11,7 @@ function Home() {
   return (
     <div className="home bg-main-bg" onClick={handleTouchStart}>
       <div className='flex justify-center items-center h-screen'>
-        <h1 className='font-myeongjo-bold text-center text-2xl'>화면을 터치하여 시작해주세요</h1>
+        <img src={"/UI/UI_01.png"} alt="UI_01" className='w-full h-full object-cover' />
       </div>
     </div>
   );

@@ -22,56 +22,72 @@ const Generation = () => {
     };
 
     useEffect(() => {
-        const socket = socketService.getSocket();
+        // 소켓 설정을 위한 비동기 함수
+        async function setupSocket() {
+            const socket = await socketService.getSocket();
+            
+            // 진행률 이벤트 리스너
+            const progressHandler = (progress) => {
+                console.log('서버 진행률:', progress);
+                
+                // 객체로 들어오는 경우와 단순 숫자로 들어오는 경우 모두 처리
+                const progressValue = typeof progress === 'object' ? progress.percent : progress;
+                targetProgressRef.current = progressValue;
 
+                if(!animationRef.current) {
+                    animationRef.current = requestAnimationFrame(animationProgress);
+                }
+            };
+
+            // 결과 이미지 이벤트 리스너
+            const resultHandler = (data) => {
+                console.log('결과 이미지 수신:', data);
+                resultImagesRef.current = data.resultImage;
+                setLoading(100);
+
+                setTimeout(() => {
+                    console.log('결과 페이지로 이동 중');
+                    navigate('/result', {
+                        state: {
+                            images: [data.resultImage],
+                        },
+                    });
+                }, 1000);
+            };
+
+            // 에러처리
+            const errorHandler = (error) => {
+                console.error('Error from server:', error.message);
+                navigate('/result');
+            };
+
+            // 이벤트 리스너 등록
+            socket.on('progress', progressHandler);
+            socket.on('result-for-kiosk', resultHandler);
+            socket.on('error', errorHandler);
+
+            // 클린업 함수 반환
+            return () => {
+                socket.off('progress', progressHandler);
+                socket.off('result-for-kiosk', resultHandler);
+                socket.off('error', errorHandler);
+
+                if(animationRef.current) {
+                    cancelAnimationFrame(animationRef.current);
+                }
+            };
+        }
+
+        // 비동기 함수 실행 및 클린업 설정
+        const socketPromise = setupSocket();
         
-        // 진행률 이벤트 리스너
-        const progressHandler = (progress) => {
-            console.log('서버 진행률:', progress);
-
-            targetProgressRef.current = progress;
-
-            if(!animationRef.current) {
-                animationRef.current = requestAnimationFrame(animationProgress);
-            }
-        };
-
-        // 결과 이미지 이벤트 리스너
-        const resultHandler = (data) => {
-            // clearTimeout(fallbackTimer);
-            resultImagesRef.current = data.resultImage;
-            setLoading(100);
-
-            setTimeout(() => {
-                navigate('/result', {
-                    state: {
-                        images: [data.resultImage],
-                    },
-                });
-            }, 1000);
-        };
-
-        // 에러처리
-        const errorHandler = (error) => {
-            console.error('Error from server:', error.message);
-            // clearTimeout(fallbackTimer);
-            navigate('/result');
-        };
-
-        // 이벤트 리스너 등록
-        socket.on('progress', progressHandler);
-        socket.on('result-for-kiosk', resultHandler);
-        socket.on('error', errorHandler);
-
         return () => {
-            // clearTimeout(fallbackTimer);
-            socket.off('progress', progressHandler);
-            socket.off('result-for-kiosk', resultHandler);
-            socket.off('error', errorHandler);
-
-            if(animationRef.current) {
-                cancelAnimationFrame(animationRef.current);
-            }
+            // 클린업 시 비동기 작업 처리
+            socketPromise.then(cleanup => {
+                if (typeof cleanup === 'function') {
+                    cleanup();
+                }
+            });
         };
     }, [navigate]);
 

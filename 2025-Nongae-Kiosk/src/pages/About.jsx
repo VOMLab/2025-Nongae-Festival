@@ -13,17 +13,19 @@ function About() {
   }
 
   return (
-    <div className="about font-myeongjo-bold bg-main-bg">
+    <div className="about font-myeongjo-bold">
       <div className="h-screen flex flex-col justify-center items-center gap-24">
-        <div className='text-center'>
-          <p>논개의 혼을 기리고 진주의 멋과 흥을 알리는</p>
-          <p>논개제에 오신 것을 환영하오</p>
-        </div>
-        <h1 className='text-center text-2xl'>역할을 골라주세요</h1>
-        <div className='flex justify-center items-center gap-24'>
-          <button onClick={() => handleTouchSelect('춤꾼')}>춤꾼</button>
-          <button onClick={() => handleTouchSelect('소리꾼')}>소리꾼</button>
-          <button onClick={() => handleTouchSelect('관람꾼')}>관람꾼</button>
+        <img src={'/UI/UI_02.png'} alt="UI_02" className='w-full h-full object-cover absolute top-0 left-0 -z-10' />
+        <div className='flex justify-center items-center gap-4 pr-4 pl-4'>
+          <button onClick={() => handleTouchSelect('춤꾼')}>
+            <img src={'/UI/UI_02_button_Choice_01.png'} alt="UI_02_button_choice_01" className='w-full h-full' />
+          </button>
+          <button onClick={() => handleTouchSelect('소리꾼')}>
+            <img src={'/UI/UI_02_button_Choice_02.png'} alt="UI_02_button_choice_02" className='w-full h-full' />
+          </button>
+          <button onClick={() => handleTouchSelect('관람꾼')}>
+            <img src={'/UI/UI_02_button_Choice_03.png'} alt="UI_02_button_choice_03" className='w-full h-full' />
+          </button>
         </div>
       </div>
     </div>

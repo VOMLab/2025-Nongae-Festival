@@ -18,11 +18,9 @@ const PrintResult = () => {
     }, [countDown, navigate]);
 
     return (
-        <main className='bg-main-bg'>
-            <div className="flex flex-col font-bold items-center justify-center h-screen font-myeongjo">
-                <p>AI 이미지를 엽서로 출력하고 있습니다.</p>
-                <p className="mb-12">잠시만 기다려주세요.</p>
-                <p className='mb-12'>정면의 LED에서 축제에 방문한 자신의 모습을 찾아보세요.</p>
+        <main className='overflow-hidden h-screen'>
+            <img src={'/UI/UI_07.png'} alt="UI_07" className='w-full h-full object-cover' />
+            <div className="absolute inset-0 flex flex-col font-bold items-center justify-center font-myeongjo">
                 <p>{countDown}초 뒤, 처음 화면으로 돌아갑니다.</p>
             </div>
         </main>

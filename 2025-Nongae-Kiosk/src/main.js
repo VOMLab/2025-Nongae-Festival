@@ -1,4 +1,5 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
+import fs from 'fs';
 import path from 'node:path';
 import started from 'electron-squirrel-startup';
 
@@ -7,14 +8,37 @@ if (started) {
   app.quit();
 }
 
+const getConfigPath = () => {
+  if(app.isPackaged) {
+    // 빌드 환경
+    return path.join(process.resourcesPath, 'config.json');
+  } else {
+    // 개발 환경
+    return path.join(app.getAppPath(), 'config.json');
+  }
+}
+
+const getConfig = () => {
+  try {
+    const configPath = getConfigPath();
+    const data = fs.readFileSync(configPath, 'utf8');
+    return JSON.parse(data);
+  } catch (error) {
+    console.error('Config 파일을 읽을 수 없습니다:', error);
+    return null;
+  }
+}
+
+
 const createWindow = () => {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 720,
     height: 1280,
     webPreferences: {
-      nodeIntegration: true,
-      contextIsolation: false,
+      preload: path.join(__dirname, 'preload.js'),
+      nodeIntegration: false,
+      contextIsolation: true,
     },
   });
 
@@ -31,6 +55,11 @@ const createWindow = () => {
   // Open the DevTools.
   mainWindow.webContents.openDevTools();
 };
+
+// IPC 핸들러 등록 - 설정 가져오기
+ipcMain.handle('get-config', async () => {
+  return getConfig();
+});
 
 // This method will be called when Electron has finished
 // initialization and is ready to create browser windows.

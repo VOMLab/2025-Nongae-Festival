@@ -1,0 +1,6 @@
+{
+    "hostAddress": "127.0.0.1",
+    "hostPort": 3001,
+    "kioskId": "Kiosk-1",
+    "comfyServerPort": 8000
+}
